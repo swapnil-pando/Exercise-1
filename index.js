@@ -42,7 +42,7 @@ function parser(filename){
 
 
 
-function collectLineItems(item,start,end,res){
+function collectLineItems(item,start,end,result){
     if(start == end){
         return;
     }
@@ -52,8 +52,8 @@ function collectLineItems(item,start,end,res){
     // console.log(item[start].LineItemExpenseFields.length);
     collectLineItemExpenseFields(item[start].LineItemExpenseFields,i,j,obj1);
     // console.log(obj1);
-    res.push(obj1)
-    collectLineItems(item,start+1,end,res);
+    result.push(obj1)
+    collectLineItems(item,start+1,end,result);
 }
 
 
@@ -117,21 +117,21 @@ app.get('/array',(req,res)=>{
         res.send(result);
     }
     
-    let query_keys=Object.keys(req.query);
-        console.log(query_keys);
-        for(let i=0;i<query_keys.length;i++){
-            if(['field','value','field_value'].indexOf(query_keys[i]) === -1){
-                res.status(404).send("The query requested cannot be served");
-                throw new Error("The query requested cannot be served");
-            }
-        }
+    // let query_keys=Object.keys(req.query);
+    //     console.log(query_keys);
+    //     for(let i=0;i<query_keys.length;i++){
+    //         if(['field','value','field_value'].indexOf(query_keys[i]) === -1){
+    //             res.status(404).send("The query requested cannot be served");
+    //             throw new Error("The query requested cannot be served");
+    //         }
+    //     }
 
 
     if(req.query.value){
-        if(!(req.query.value in Object.keys(result[0]))){
-            res.status(404).send("The query requested cannot be served");
-            throw new Error("The query requested cannot be served");
-        }
+        // if(!(req.query.value in Object.keys(result[0]))){
+        //     res.status(404).send("The query requested cannot be served");
+        //     throw new Error("The query requested cannot be served");
+        // }
         
         if(!req.query.field){
         let out = 0;
