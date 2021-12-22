@@ -31,14 +31,21 @@ let result = [];
 function parser(filename){
     console.log("Filename: " + filename);
     let rawdata = fs.readFileSync(path.resolve(__dirname, filename));
+    try{
     let data = JSON.parse(rawdata);
-
-// console.log(data.ExpenseDocuments[0].LineItemGroups[0].LineItems);
     start = 0
     end = data.ExpenseDocuments[0].LineItemGroups[0].LineItems.length;
     collectLineItems(data.ExpenseDocuments[0].LineItemGroups[0].LineItems,start,end,result);
     console.log(result.length);
+    }catch{
+        throw new Error("Please provide a file of type json");
+    }
+
+
+    
 }
+
+
 
 
 
@@ -90,6 +97,26 @@ app.post('/',(req,res)=>{
         res.status(404).send("File Already Exists");
         throw new Error("The file already exists");
     }
+
+    const name = req.files.input.name;
+    const arr = name.split('.');
+    if(arr.length > 2 || arr[1] !== "json"){
+        res.status(404).send("Please provide the input file in the appropriate json format");
+        throw new Error("Please provide the input file in the appropriate json format");
+    }
+
+    let disk = require('diskusage');
+
+
+    disk.check('/', function(err, info) {
+        if(req.files.input.size > info.free){
+            res.status(404).send("The file size is greater than the available memory");
+            throw new Error("The file size is greater than the available memory");
+        }
+        
+    });
+    
+
     shas.push(req.files.input.md5);
     // console.log(shas);
     // console.log(shas.length);
