@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const json_parser = require('./json_parser');
 const fileUpload = require('express-fileupload');
+const file_upload_checks=require('./file_upload_checks');
+
 const app = express();
 app.use(express.json());
 app.use(fileUpload());
@@ -12,12 +14,6 @@ let result = [];
 let shas=[];
 // Utility function to convert string to float
 function convert_to_float(a) {
-          
-    // Type conversion
-    // of string to float
-    // let splits=a.split(',');
-    // let inp="";
-    // splits.map((e)=>inp+e);
     let splits = a.split(',');
     if(splits[1]){
         a=splits[0]+splits[1];
@@ -89,13 +85,14 @@ function parser(file_name){
 
 
 app.post('/',(req,res)=>{
-    if (fs.existsSync(`files/${req.files.input.name}`)){
-        // throw new Error("File Already Exists");
+
+    if(file_upload_checks.fileExists(`files/${req.files.input.name}`)){
         res.status(404).send("File Already Exists");
         throw new Error("The file already exists");
     }
+
     
-    if(shas.indexOf(req.files.input.md5) !== -1 ){
+    if(file_upload_checks(shas,req.files.input.md5)){
         res.status(404).send("File Already Exists");
         throw new Error("The file already exists");
     }

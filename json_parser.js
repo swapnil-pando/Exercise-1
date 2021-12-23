@@ -1,9 +1,3 @@
-// const fs = require('fs');
-// const path = require('path');
-
-
-
-
 module.exports.extractLabelAndValue=function extractLabelAndValue(data,result,obj={}){
     if(typeof data ===  'object' && !Array.isArray(data)){
         for(item in data){
@@ -31,4 +25,3 @@ module.exports.extractLabelAndValue=function extractLabelAndValue(data,result,ob
     }
 }
 
-// module.exports.result = result;
