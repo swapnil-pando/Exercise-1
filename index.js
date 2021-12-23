@@ -1,11 +1,14 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const json_parser = require('./json_parser');
 const fileUpload = require('express-fileupload');
 const app = express();
 app.use(express.json());
 app.use(fileUpload());
 
+
+let result = [];
 let shas=[];
 // Utility function to convert string to float
 function convert_to_float(a) {
@@ -26,11 +29,10 @@ function convert_to_float(a) {
 } 
 
 
-
-let result = [];
-function parser(filename){
-    console.log("Filename: " + filename);
-    let rawdata = fs.readFileSync(path.resolve(__dirname, filename));
+function parser(file_name){
+   
+    console.log("Filename: " + file_name);
+    let rawdata = fs.readFileSync(path.resolve(__dirname, file_name));
     try{
     let data = JSON.parse(rawdata);
     // start = 0
@@ -38,41 +40,12 @@ function parser(filename){
     // collectLineItems(data.ExpenseDocuments[0].LineItemGroups[0].LineItems,start,end,result);
     // console.log(result.length);
     // let result = [];
-    extractLabelAndValue(data);
+    json_parser.extractLabelAndValue(data,result);
+    
     }catch{
         throw new Error("Please provide a file of type json");
     }
 }
-
-
-function extractLabelAndValue(data,obj={}){
-    if(typeof data ===  'object' && !Array.isArray(data)){
-        for(item in data){
-        if('LabelDetection' in data && 'ValueDetection' in data){
-            if(data.ValueDetection.Text){
-                const key1 = data.LabelDetection.Text.split('\n');
-                let key="";
-                for(let i=0;i<key1.length;i++){
-                    key+=key1[i];
-                }
-                obj[key] = data.ValueDetection.Text
-            }
-            
-        }else{
-            extractLabelAndValue(data[item],obj);
-        }
-    }
-    }else if(Array.isArray(data)){
-        let obj={};
-        for(const arrayItem of data){
-            extractLabelAndValue(arrayItem,obj);
-        }
-        if(Object.keys(obj).length !== 0)
-            result.push(obj);
-    }
-        
-}
-
 
 
 
@@ -147,8 +120,7 @@ app.post('/',(req,res)=>{
     
 
     shas.push(req.files.input.md5);
-    // console.log(shas);
-    // console.log(shas.length);
+    
     file_name = `files/${req.files.input.name}`;
     console.log(req.files);
     fs.writeFile(file_name,req.files.input.data,(err)=>{
