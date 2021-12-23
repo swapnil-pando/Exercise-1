@@ -33,56 +33,85 @@ function parser(filename){
     let rawdata = fs.readFileSync(path.resolve(__dirname, filename));
     try{
     let data = JSON.parse(rawdata);
-    start = 0
-    end = data.ExpenseDocuments[0].LineItemGroups[0].LineItems.length;
-    collectLineItems(data.ExpenseDocuments[0].LineItemGroups[0].LineItems,start,end,result);
-    console.log(result.length);
+    // start = 0
+    // end = data.ExpenseDocuments[0].LineItemGroups[0].LineItems.length;
+    // collectLineItems(data.ExpenseDocuments[0].LineItemGroups[0].LineItems,start,end,result);
+    // console.log(result.length);
+    // let result = [];
+    extractLabelAndValue(data);
     }catch{
         throw new Error("Please provide a file of type json");
     }
-
-
-    
 }
 
 
-
-
-
-function collectLineItems(item,start,end,result){
-    if(start == end){
-        return;
-    }
-    i=0
-    j=item[start].LineItemExpenseFields.length;
-    obj1={};
-    // console.log(item[start].LineItemExpenseFields.length);
-    collectLineItemExpenseFields(item[start].LineItemExpenseFields,i,j,obj1);
-    // console.log(obj1);
-    result.push(obj1)
-    collectLineItems(item,start+1,end,result);
-}
-
-
-function collectLineItemExpenseFields(item2,i,j,obj1){
-    if(i == j){
-        return;
-    }
-    try{
-    if(item2[i].ValueDetection.Text){
-        const key1 = item2[i].LabelDetection.Text.split('\n');
-        let key="";
-        for(let i=0;i<key1.length;i++){
-            key+=key1[i];
+function extractLabelAndValue(data,obj={}){
+    if(typeof data ===  'object' && !Array.isArray(data)){
+        for(item in data){
+        if('LabelDetection' in data && 'ValueDetection' in data){
+            if(data.ValueDetection.Text){
+                const key1 = data.LabelDetection.Text.split('\n');
+                let key="";
+                for(let i=0;i<key1.length;i++){
+                    key+=key1[i];
+                }
+                obj[key] = data.ValueDetection.Text
+            }
+            
+        }else{
+            extractLabelAndValue(data[item],obj);
         }
-        obj1[key] = item2[i].ValueDetection.Text
     }
-    }catch{
-
+    }else if(Array.isArray(data)){
+        let obj={};
+        for(const arrayItem of data){
+            extractLabelAndValue(arrayItem,obj);
+        }
+        if(Object.keys(obj).length !== 0)
+            result.push(obj);
     }
-    collectLineItemExpenseFields(item2,i+1,j,obj1)
-    
+        
 }
+
+
+
+
+
+
+// function collectLineItems(item,start,end,result){
+//     if(start == end){
+//         return;
+//     }
+//     i=0
+//     j=item[start].LineItemExpenseFields.length;
+//     obj1={};
+//     // console.log(item[start].LineItemExpenseFields.length);
+//     collectLineItemExpenseFields(item[start].LineItemExpenseFields,i,j,obj1);
+//     // console.log(obj1);
+//     result.push(obj1)
+//     collectLineItems(item,start+1,end,result);
+// }
+
+
+// function collectLineItemExpenseFields(item2,i,j,obj1){
+//     if(i == j){
+//         return;
+//     }
+//     try{
+//     if(item2[i].ValueDetection.Text){
+//         const key1 = item2[i].LabelDetection.Text.split('\n');
+//         let key="";
+//         for(let i=0;i<key1.length;i++){
+//             key+=key1[i];
+//         }
+//         obj1[key] = item2[i].ValueDetection.Text
+//     }
+//     }catch{
+
+//     }
+//     collectLineItemExpenseFields(item2,i+1,j,obj1)
+    
+// }
 
 
 
