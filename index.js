@@ -10,8 +10,9 @@ app.use(express.json());
 app.use(fileUpload());
 
 
-let result = [];
+
 let shas=[];
+let result_obj={};
 // Utility function to convert string to float
 function convert_to_float(a) {
     let splits = a.split(',');
@@ -31,12 +32,18 @@ function parser(file_name){
     let rawdata = fs.readFileSync(path.resolve(__dirname, file_name));
     try{
     let data = JSON.parse(rawdata);
+    let result = [];
     // start = 0
     // end = data.ExpenseDocuments[0].LineItemGroups[0].LineItems.length;
     // collectLineItems(data.ExpenseDocuments[0].LineItemGroups[0].LineItems,start,end,result);
     // console.log(result.length);
     // let result = [];
     json_parser.extractLabelAndValue(data,result);
+    // console.log(result);
+    // console.log("The file_name inside parser is"+file_name);
+    key = file_name.split('/')[1];
+    result_obj[key]=result;
+    // console.log(result_obj);
     
     }catch{
         throw new Error("Please provide a file of type json");
@@ -92,7 +99,7 @@ app.post('/',(req,res)=>{
     }
 
     
-    if(file_upload_checks(shas,req.files.input.md5)){
+    if(file_upload_checks.shaExists(shas,req.files.input.md5)){
         res.status(404).send("File Already Exists");
         throw new Error("The file already exists");
     }
@@ -119,7 +126,7 @@ app.post('/',(req,res)=>{
     shas.push(req.files.input.md5);
     
     file_name = `files/${req.files.input.name}`;
-    console.log(req.files);
+    // console.log(req.files);
     fs.writeFile(file_name,req.files.input.data,(err)=>{
         if(err){
             throw new Error("Failed in uploading data");
@@ -136,28 +143,14 @@ app.post('/',(req,res)=>{
 // Sending the result Array
 
 // Querying is based on value and field and field_value
-app.get('/array',(req,res)=>{
-    console.log(req.query);
+app.get('/:filename',(req,res)=>{
+    // console.log(req.query);
     if(Object.keys(req.query).length === 0){
-        res.send(result);
+        // console.log("req.params "+req.params.filename);
+        res.send(result_obj[req.params.filename]);
     }
-    
-    // let query_keys=Object.keys(req.query);
-    //     console.log(query_keys);
-    //     for(let i=0;i<query_keys.length;i++){
-    //         if(['field','value','field_value'].indexOf(query_keys[i]) === -1){
-    //             res.status(404).send("The query requested cannot be served");
-    //             throw new Error("The query requested cannot be served");
-    //         }
-    //     }
-
 
     if(req.query.value){
-        // if(!(req.query.value in Object.keys(result[0]))){
-        //     res.status(404).send("The query requested cannot be served");
-        //     throw new Error("The query requested cannot be served");
-        // }
-        
         if(!req.query.field){
         let out = 0;
         console.log("Hi there :::" + req.query.value);
@@ -168,7 +161,6 @@ app.get('/array',(req,res)=>{
            
             
             try{
-
                 console.log(convert_to_float(result[i][value]));
                 const val = convert_to_float(result[i][value]);
                 if(isNaN(val) == false){
