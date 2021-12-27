@@ -50,47 +50,6 @@ function parser(file_name){
     }
 }
 
-
-
-
-
-// function collectLineItems(item,start,end,result){
-//     if(start == end){
-//         return;
-//     }
-//     i=0
-//     j=item[start].LineItemExpenseFields.length;
-//     obj1={};
-//     // console.log(item[start].LineItemExpenseFields.length);
-//     collectLineItemExpenseFields(item[start].LineItemExpenseFields,i,j,obj1);
-//     // console.log(obj1);
-//     result.push(obj1)
-//     collectLineItems(item,start+1,end,result);
-// }
-
-
-// function collectLineItemExpenseFields(item2,i,j,obj1){
-//     if(i == j){
-//         return;
-//     }
-//     try{
-//     if(item2[i].ValueDetection.Text){
-//         const key1 = item2[i].LabelDetection.Text.split('\n');
-//         let key="";
-//         for(let i=0;i<key1.length;i++){
-//             key+=key1[i];
-//         }
-//         obj1[key] = item2[i].ValueDetection.Text
-//     }
-//     }catch{
-
-//     }
-//     collectLineItemExpenseFields(item2,i+1,j,obj1)
-    
-// }
-
-
-
 app.post('/',(req,res)=>{
 
     if(file_upload_checks.fileExists(`files/${req.files.input.name}`)){
@@ -149,14 +108,15 @@ app.get('/:filename',(req,res)=>{
         // console.log("req.params "+req.params.filename);
         res.send(result_obj[req.params.filename]);
     }
-
+    let result = result_obj[req.params.filename];
     if(req.query.value){
         if(!req.query.field){
         let out = 0;
         console.log("Hi there :::" + req.query.value);
         let value = req.query.value;
         // console.log(value);
-        console.log(result[0].value);
+        // console.log(result[0].value);
+        
         for(let i=0;i<result.length;i++){
            
             
