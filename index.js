@@ -102,17 +102,25 @@ app.post('/',(req,res)=>{
 // Sending the result Array
 
 // Querying is based on value and field and field_value
+let queries = ["field","value","field_value"];
 app.get('/:filename',(req,res)=>{
-    // console.log(req.query);
+    console.log(req.query);
     if(Object.keys(req.query).length === 0){
         // console.log("req.params "+req.params.filename);
         res.send(result_obj[req.params.filename]);
     }
     let result = result_obj[req.params.filename];
+    for(query in req.query){
+        if(queries.indexOf(query) === -1){
+            console.log(query);
+            res.status(404).send("The provided query parameters are not supported");
+            throw new Error("The provided query parameters are not supported");
+        }
+    }
     if(req.query.value){
         if(!req.query.field){
         let out = 0;
-        console.log("Hi there :::" + req.query.value);
+        console.log("Hi there ::: " + req.query.value);
         let value = req.query.value;
         // console.log(value);
         // console.log(result[0].value);
@@ -139,22 +147,22 @@ app.get('/:filename',(req,res)=>{
             res.send(out.toString());
         }
     }else{
-        if(req.query.field === "UOM"){
-            console.log("Going in for UOM");
+        // if(req.query.field === "UOM"){
+            if(!("field_value" in req.query)){
+                res.status(404).send("Please provide a field_value associated with the field");
+                throw new Error("Please provide a field_value associated with the field");
+            }
+            // console.log("Going in for UOM");
             let out = 0;
             for(let i=0;i<result.length;i++){
-           
                 if(result[i][req.query.field] === req.query.field_value){
-                    console.log("Going on for ea");
-               
-                let value = req.query.value;    
-                console.log(convert_to_float(result[i][value]));
-                const val = convert_to_float(result[i][value]);
-                if(isNaN(val) == false){
-                    out+=val;
-                }
-                    
-                    
+                    // console.log("Going on for ea");
+                    let value = req.query.value;    
+                    console.log(convert_to_float(result[i][value]));
+                    const val = convert_to_float(result[i][value]);
+                    if(isNaN(val) == false){
+                        out+=val;
+                    }
             }
         }
             if(out == 0){
@@ -166,33 +174,37 @@ app.get('/:filename',(req,res)=>{
             }
             
         }
-    }
-        if(req.query.field === "VAT Code"){
-            let out = 0;
-            for(let i=0;i<result.length;i++){
+    // }
+        // if(req.query.field === "VAT Code"){
+        //     let out = 0;
+        //     for(let i=0;i<result.length;i++){
            
-                if(result[i][req.query.field] === req.query.field_value){
-                    console.log("Going on for ea");
+        //         if(result[i][req.query.field] === req.query.field_value){
+        //             console.log("Going on for ea");
                
-                let value = req.query.value;    
-                console.log(convert_to_float(result[i][value]));
-                const val = convert_to_float(result[i][value]);
-                if(isNaN(val) == false){
-                    out+=val;
-                }
+        //         let value = req.query.value;    
+        //         console.log(convert_to_float(result[i][value]));
+        //         const val = convert_to_float(result[i][value]);
+        //         if(isNaN(val) == false){
+        //             out+=val;
+        //         }
                     
                     
-            }
-        }
-            if(out == 0){
-                throw new Error("No Required information is there");
+        //     }
+        // }
+        //     if(out == 0){
+        //         throw new Error("No Required information is there");
                 
-            }else{
-                // console.log(out);
-                res.send(out.toString());
-            }
-        }
+        //     }else{
+        //         // console.log(out);
+        //         res.send(out.toString());
+        //     }
+        // }
 }
+    else{
+        res.status(404).send("The provided query parameters are not supported");
+        throw new Error("The provided query parameters are not supported");
+        }
 
 });
 
