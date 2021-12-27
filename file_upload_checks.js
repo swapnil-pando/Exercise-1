@@ -1,7 +1,6 @@
 const fs = require('fs');
 
 const fileExists=(file_name)=>{
-    // console.log("Going In,"+ fs.existsSync(file_name));
     return fs.existsSync(file_name);
 }
 

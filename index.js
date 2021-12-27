@@ -10,22 +10,23 @@ app.use(express.json());
 app.use(fileUpload());
 
 
-
+// Global Objects
 let shas=[];
 let result_obj={};
-// Utility function to convert string to float
+
+
+// Utility function to convert string to float with logic to handle values with , in them
 function convert_to_float(a) {
     let splits = a.split(',');
     if(splits[1]){
         a=splits[0]+splits[1];
     }
     let floatValue = +(a);
-      
-    // Return float value
     return floatValue; 
 } 
 
 
+// The parser function to handle parsing of the uploaded json file from client
 function parser(file_name){
    
     console.log("Filename: " + file_name);
@@ -33,23 +34,18 @@ function parser(file_name){
     try{
     let data = JSON.parse(rawdata);
     let result = [];
-    // start = 0
-    // end = data.ExpenseDocuments[0].LineItemGroups[0].LineItems.length;
-    // collectLineItems(data.ExpenseDocuments[0].LineItemGroups[0].LineItems,start,end,result);
-    // console.log(result.length);
-    // let result = [];
-    json_parser.extractLabelAndValue(data,result);
-    // console.log(result);
-    // console.log("The file_name inside parser is"+file_name);
+    json_parser.extractLabelAndValue(data,result); //Calling the function to extract the label and value fields and get the array of objects in the required format
+
+    // Below is done since the file_name is file/input.json but from the client the GET request contains only the filename i.e input.json
     key = file_name.split('/')[1];
     result_obj[key]=result;
-    // console.log(result_obj);
-    
     }catch{
         throw new Error("Please provide a file of type json");
     }
 }
 
+
+// POST Handler to handle the Upload of the file from client
 app.post('/',(req,res)=>{
 
     if(file_upload_checks.fileExists(`files/${req.files.input.name}`)){
@@ -85,11 +81,10 @@ app.post('/',(req,res)=>{
     shas.push(req.files.input.md5);
     
     file_name = `files/${req.files.input.name}`;
-    // console.log(req.files);
     fs.writeFile(file_name,req.files.input.data,(err)=>{
         if(err){
+            res.status(404).send("Upload Data Failed");
             throw new Error("Failed in uploading data");
-            // res.status(404).send("Upload Data Failed");
         }else{
             parser(file_name);
             res.status(200).send("File Transfer Success");
@@ -99,17 +94,25 @@ app.post('/',(req,res)=>{
 });
 
 
-// Sending the result Array
+
 
 // Querying is based on value and field and field_value
 let queries = ["field","value","field_value"];
 app.get('/:filename',(req,res)=>{
-    console.log(req.query);
+    if(!(file_upload_checks.fileExists(`files/${req.params.filename}`))){
+        res.status(404).send("OOPS!!! The file requested for is not available");
+        throw new Error("OOPS!!! The file requested for is not available");
+    }
     if(Object.keys(req.query).length === 0){
-        // console.log("req.params "+req.params.filename);
         res.send(result_obj[req.params.filename]);
     }
+    try{
     let result = result_obj[req.params.filename];
+    }
+    catch{
+        res.status(404).send("The file requested is not available");
+        throw new Error("The file requested is not available");
+    }
     for(query in req.query){
         if(queries.indexOf(query) === -1){
             console.log(query);
@@ -120,22 +123,16 @@ app.get('/:filename',(req,res)=>{
     if(req.query.value){
         if(!req.query.field){
         let out = 0;
-        console.log("Hi there ::: " + req.query.value);
         let value = req.query.value;
-        // console.log(value);
-        // console.log(result[0].value);
-        
+        // Calculating the output specific to the value query parameter, if there is no field_value and field given in query string
         for(let i=0;i<result.length;i++){
-           
-            
             try{
                 console.log(convert_to_float(result[i][value]));
                 const val = convert_to_float(result[i][value]);
                 if(isNaN(val) == false){
                     out+=val;
                 }
-                
-                }catch{
+            }catch{
     
                 }
         }
@@ -143,20 +140,18 @@ app.get('/:filename',(req,res)=>{
             throw new Error("No Required information is there");
             
         }else{
-            // console.log(out);
             res.send(out.toString());
         }
     }else{
-        // if(req.query.field === "UOM"){
             if(!("field_value" in req.query)){
                 res.status(404).send("Please provide a field_value associated with the field");
                 throw new Error("Please provide a field_value associated with the field");
             }
-            // console.log("Going in for UOM");
             let out = 0;
+
+            // Calculating the output specific to the field_value query parameter
             for(let i=0;i<result.length;i++){
                 if(result[i][req.query.field] === req.query.field_value){
-                    // console.log("Going on for ea");
                     let value = req.query.value;    
                     console.log(convert_to_float(result[i][value]));
                     const val = convert_to_float(result[i][value]);
@@ -169,37 +164,10 @@ app.get('/:filename',(req,res)=>{
                 throw new Error("No Required information is there");
                 
             }else{
-                // console.log(out);
                 res.send(out.toString());
             }
             
         }
-    // }
-        // if(req.query.field === "VAT Code"){
-        //     let out = 0;
-        //     for(let i=0;i<result.length;i++){
-           
-        //         if(result[i][req.query.field] === req.query.field_value){
-        //             console.log("Going on for ea");
-               
-        //         let value = req.query.value;    
-        //         console.log(convert_to_float(result[i][value]));
-        //         const val = convert_to_float(result[i][value]);
-        //         if(isNaN(val) == false){
-        //             out+=val;
-        //         }
-                    
-                    
-        //     }
-        // }
-        //     if(out == 0){
-        //         throw new Error("No Required information is there");
-                
-        //     }else{
-        //         // console.log(out);
-        //         res.send(out.toString());
-        //     }
-        // }
 }
     else{
         res.status(404).send("The provided query parameters are not supported");
