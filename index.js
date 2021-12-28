@@ -165,6 +165,7 @@ app.get('/:filename',(req,res)=>{
     if(Object.keys(req.query).length === 0){
         return res.send(result_obj[req.params.filename]);
     }
+    
     try{
     let result = result_obj[req.params.filename];
     }
@@ -183,6 +184,7 @@ app.get('/:filename',(req,res)=>{
         if(!req.query.field){
         let out = 0;
         let value = req.query.value;
+        let result = result_obj[req.params.filename];
         // Calculating the output specific to the value query parameter, if there is no field_value and field given in query string
         for(let i=0;i<result.length;i++){
             try{
@@ -207,7 +209,7 @@ app.get('/:filename',(req,res)=>{
                 throw new Error("Please provide a field_value associated with the field");
             }
             let out = 0;
-
+            let result = result_obj[req.params.filename];
             // Calculating the output specific to the field_value query parameter
             for(let i=0;i<result.length;i++){
                 if(result[i][req.query.field] === req.query.field_value){
