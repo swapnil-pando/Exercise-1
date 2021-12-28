@@ -35,7 +35,7 @@ let shas=[];
 let result_obj={};
 
 
-// Utility function to convert string to float with logic to handle values with , in them
+// Utility function to convert string to float with logic to handle values with "," in them
 function convert_to_float(a) {
     let splits = a.split(',');
     if(splits[1]){
@@ -69,6 +69,8 @@ function parser(file_name){
  *  @swagger
  *  /:
  *   post:
+ *     summary: Upload a file to server
+ *     description: Upload a json file to server
  *     consumes:
  *       - multipart/form-data
  *     parameters:
@@ -84,7 +86,7 @@ function parser(file_name){
  *          description:  File Transfer Unsuccess
  */
 
-// POST Handler to handle the Upload of the file from client
+// POST Handler to handle the Upload of the file from client    
 
 app.post('/',(req,res)=>{
 
@@ -161,7 +163,7 @@ app.get('/:filename',(req,res)=>{
         throw new Error("OOPS!!! The file requested for is not available");
     }
     if(Object.keys(req.query).length === 0){
-        res.send(result_obj[req.params.filename]);
+        return res.send(result_obj[req.params.filename]);
     }
     try{
     let result = result_obj[req.params.filename];
@@ -197,7 +199,7 @@ app.get('/:filename',(req,res)=>{
             throw new Error("No Required information is there");
             
         }else{
-            res.send(out.toString());
+            return res.send(out.toString());
         }
     }else{
             if(!("field_value" in req.query)){
@@ -221,7 +223,7 @@ app.get('/:filename',(req,res)=>{
                 throw new Error("No Required information is there");
                 
             }else{
-                res.send(out.toString());
+                return res.send(out.toString());
             }
             
         }
