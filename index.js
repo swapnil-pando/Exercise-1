@@ -4,10 +4,30 @@ const path = require('path');
 const json_parser = require('./json_parser');
 const fileUpload = require('express-fileupload');
 const file_upload_checks=require('./file_upload_checks');
+const swaggerJsDOC = require('swagger-jsdoc');
+const swaggerUI = require('swagger-ui-express');
 
 const app = express();
 app.use(express.json());
 app.use(fileUpload());
+
+const port = process.env.PORT || 4000;
+const swaggerOptions = {
+    swaggerDefinition:{
+        info:{
+            title: 'File Transfer API',
+            description: 'API for file Upload',
+            contact:{
+                name:"Swapnil Satpathy"
+            }
+        },
+        servers:[`http://localhost:${port}`]
+    },
+    apis:["index.js"]
+}
+
+const swaggerDocs = swaggerJsDOC(swaggerOptions);
+app.use('/api-docs',swaggerUI.serve,swaggerUI.setup(swaggerDocs));
 
 
 // Global Objects
@@ -45,7 +65,27 @@ function parser(file_name){
 }
 
 
+/**
+ *  @swagger
+ *  /:
+ *   post:
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - name: input
+ *         in: formData   # <-----
+ *         description: The uploaded file data
+ *         required: true
+ *         type: file     # <-----
+ *     responses:
+ *       '200':
+ *          description:  File Transfer Success
+ *       '404':
+ *          description:  File Transfer Unsuccess
+ */
+
 // POST Handler to handle the Upload of the file from client
+
 app.post('/',(req,res)=>{
 
     if(file_upload_checks.fileExists(`files/${req.files.input.name}`)){
@@ -93,11 +133,28 @@ app.post('/',(req,res)=>{
 
 });
 
-
-
-
+/**
+ *  @swagger
+ *  /{filename}:
+ *   get:
+ *     summary: Use to Get the result for the given file-name in the required format
+ *     description: Use to Get the result for the given file-name in the required format
+ *     parameters:
+ *       - in: path
+ *         name: filename
+ *         required: true
+ *         description: name of the file
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '200':
+ *          description:  A successful result in the format of array of objects is returned...
+ *       '404':
+ *          description: If the file is not present
+ */
 // Querying is based on value and field and field_value
 let queries = ["field","value","field_value"];
+
 app.get('/:filename',(req,res)=>{
     if(!(file_upload_checks.fileExists(`files/${req.params.filename}`))){
         res.status(404).send("OOPS!!! The file requested for is not available");
@@ -177,5 +234,5 @@ app.get('/:filename',(req,res)=>{
 });
 
 
-const port = process.env.PORT || 4000;
+
 app.listen(port,()=> console.log(`Listening at port ${port}`));
