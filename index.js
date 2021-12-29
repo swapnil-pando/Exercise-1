@@ -89,7 +89,11 @@ function parser(file_name){
 // POST Handler to handle the Upload of the file from client    
 
 app.post('/',(req,res)=>{
+    let dir = './files';
 
+    if (!fs.existsSync(dir)){
+        fs.mkdirSync(dir);
+    }
     if(file_upload_checks.fileExists(`files/${req.files.input.name}`)){
         res.status(404).send("File Already Exists");
         throw new Error("The file already exists");
