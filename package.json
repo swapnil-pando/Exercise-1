@@ -16,6 +16,7 @@
     "expres": "^0.0.5",
     "express": "^4.17.2",
     "express-fileupload": "^1.2.1",
+    "mongoose": "^6.1.4",
     "multer": "^1.4.4",
     "swagger-jsdoc": "^6.1.0",
     "swagger-ui-express": "^4.3.0"

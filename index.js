@@ -6,6 +6,7 @@ const fileUpload = require('express-fileupload');
 const file_upload_checks=require('./file_upload_checks');
 const swaggerJsDOC = require('swagger-jsdoc');
 const swaggerUI = require('swagger-ui-express');
+const mongoose = require('mongoose');
 
 const app = express();
 app.use(express.json());
@@ -30,6 +31,10 @@ const swaggerDocs = swaggerJsDOC(swaggerOptions);
 app.use('/api-docs',swaggerUI.serve,swaggerUI.setup(swaggerDocs));
 
 
+
+
+
+
 // Global Objects
 let shas=[];
 let result_obj={};
@@ -46,6 +51,45 @@ function convert_to_float(a) {
 } 
 
 
+function insert_into_db(file_name,result){
+
+    // Mongoose
+mongoose.connect('mongodb://localhost:27017/exercise-1')
+.then(() => console.log('Connected to MongoDB'))
+.catch((err)=>console.error("Could not connect to MongoDB", err));
+
+const resultSchema = new mongoose.Schema({
+filename: String,
+Description: String,
+Qty: String,
+UOM: String,
+"Unit Price(Curr)":String,
+"Discount%": String,
+"Net Amt(Curr)":String,
+"Net Amt(AED)":String,
+"VAT Code":String,
+"VAT%":String,
+"VAT Amt(Curr)":String,
+"VAT Amt(AED)":String,
+"Gross Amt(Curr)":String,
+"Gross Amt(AED)":String,
+});
+
+const result_from_db = mongoose.model('result',resultSchema);
+
+async function createDBEntry(){
+for(let res of result){
+    let res1 = new result_from_db({
+        filename:file_name,
+        ...res});
+    const res2 = await res1.save();
+
+}
+}
+createDBEntry();
+
+}
+
 // The parser function to handle parsing of the uploaded json file from client
 function parser(file_name){
    
@@ -59,6 +103,7 @@ function parser(file_name){
     // Below is done since the file_name is file/input.json but from the client the GET request contains only the filename i.e input.json
     key = file_name.split('/')[1];
     result_obj[key]=result;
+    insert_into_db(key,result)
     }catch{
         throw new Error("Please provide a file of type json");
     }
@@ -86,7 +131,9 @@ function parser(file_name){
  *          description:  File Transfer Unsuccess
  */
 
-// POST Handler to handle the Upload of the file from client    
+// POST Handler to handle the Upload of the file from client   
+
+
 
 app.post('/',(req,res)=>{
     let dir = './files';
@@ -168,6 +215,7 @@ app.get('/:filename',(req,res)=>{
     }
     if(Object.keys(req.query).length === 0){
         return res.send(result_obj[req.params.filename]);
+        
     }
     
     try{
