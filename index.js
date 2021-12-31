@@ -7,6 +7,7 @@ const file_upload_checks=require('./file_upload_checks');
 const swaggerJsDOC = require('swagger-jsdoc');
 const swaggerUI = require('swagger-ui-express');
 const mongoose = require('mongoose');
+const { resolve } = require('path');
 
 const app = express();
 app.use(express.json());
@@ -31,29 +32,6 @@ const swaggerDocs = swaggerJsDOC(swaggerOptions);
 app.use('/api-docs',swaggerUI.serve,swaggerUI.setup(swaggerDocs));
 
 
-
-
-
-
-// Global Objects
-let shas=[];
-let result_obj={};
-
-
-// Utility function to convert string to float with logic to handle values with "," in them
-function convert_to_float(a) {
-    let splits = a.split(',');
-    if(splits[1]){
-        a=splits[0]+splits[1];
-    }
-    let floatValue = +(a);
-    return floatValue; 
-} 
-
-
-function insert_into_db(file_name,result){
-
-    // Mongoose
 mongoose.connect('mongodb://localhost:27017/exercise-1')
 .then(() => console.log('Connected to MongoDB'))
 .catch((err)=>console.error("Could not connect to MongoDB", err));
@@ -77,6 +55,29 @@ UOM: String,
 
 const result_from_db = mongoose.model('result',resultSchema);
 
+
+
+// Global Objects
+let shas=[];
+let result_obj={};
+
+
+// Utility function to convert string to float with logic to handle values with "," in them
+function convert_to_float(a) {
+    let splits = a.split(',');
+    if(splits[1]){
+        a=splits[0]+splits[1];
+    }
+    let floatValue = +(a);
+    return floatValue; 
+} 
+
+
+function insert_into_db(file_name,result){
+
+    // Mongoose
+
+
 async function createDBEntry(){
 for(let res of result){
     let res1 = new result_from_db({
@@ -89,6 +90,16 @@ for(let res of result){
 createDBEntry();
 
 }
+
+
+async function get_from_db(file_name){
+    console.log(file_name);
+    const result_ = await result_from_db.find({filename:file_name});
+    return result_;
+}
+
+
+
 
 // The parser function to handle parsing of the uploaded json file from client
 function parser(file_name){
@@ -208,23 +219,20 @@ app.post('/',(req,res)=>{
 // Querying is based on value and field and field_value
 let queries = ["field","value","field_value"];
 
-app.get('/:filename',(req,res)=>{
+app.get('/:filename',async (req,res)=>{
     if(!(file_upload_checks.fileExists(`files/${req.params.filename}`))){
         res.status(404).send("OOPS!!! The file requested for is not available");
         throw new Error("OOPS!!! The file requested for is not available");
     }
-    if(Object.keys(req.query).length === 0){
-        return res.send(result_obj[req.params.filename]);
-        
-    }
-    
-    try{
-    let result = result_obj[req.params.filename];
-    }
-    catch{
+    const result = await get_from_db(req.params.filename);
+    if(!result){
         res.status(404).send("The file requested is not available");
         throw new Error("The file requested is not available");
     }
+    if(Object.keys(req.query).length === 0){
+        return res.send(result);
+    }
+    
     for(query in req.query){
         if(queries.indexOf(query) === -1){
             console.log(query);
@@ -236,7 +244,6 @@ app.get('/:filename',(req,res)=>{
         if(!req.query.field){
         let out = 0;
         let value = req.query.value;
-        let result = result_obj[req.params.filename];
         // Calculating the output specific to the value query parameter, if there is no field_value and field given in query string
         for(let i=0;i<result.length;i++){
             try{
@@ -261,7 +268,6 @@ app.get('/:filename',(req,res)=>{
                 throw new Error("Please provide a field_value associated with the field");
             }
             let out = 0;
-            let result = result_obj[req.params.filename];
             // Calculating the output specific to the field_value query parameter
             for(let i=0;i<result.length;i++){
                 if(result[i][req.query.field] === req.query.field_value){
